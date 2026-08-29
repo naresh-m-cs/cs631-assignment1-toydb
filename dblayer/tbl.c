@@ -180,8 +180,6 @@ Table_Insert(Table *tbl, byte *record, int len, RecId *rid) {
     *rid = (pageNum << 16) | nslots;
 
     // 9. Mark page as dirty and unfix it
-    err = PF_DirtyPage(tbl->fd, pageNum);
-    checkerr(err);
     err = PF_UnfixPage(tbl->fd, pageNum, TRUE);
     checkerr(err);
 
@@ -200,22 +198,66 @@ Table_Get(Table *tbl, RecId rid, byte *record, int maxlen) {
     int slot = rid & 0xFFFF;
     int pageNum = rid >> 16;
 
-    UNIMPLEMENTED;
-    // PF_GetThisPage(pageNum)
-    // In the page get the slot offset of the record, and
-    // memcpy bytes into the record supplied.
-    // Unfix the page
-    return len; // return size of record
+    char *pageBuf;
+    int err;
+
+    // 1. Get the page containing the record
+    err = PF_GetThisPage(tbl->fd, pageNum, &pageBuf);
+    checkerr(err);
+
+    // 2. Get the slot information (offset and length)
+    int slotAddr = getNthSlotOffset(slot, pageBuf);
+    int recordOff, recordLen;
+    memcpy(&recordOff, pageBuf + slotAddr, 2);
+    memcpy(&recordLen, pageBuf + slotAddr + 2, 2);
+
+    // 3. Copy record data (up to maxlen bytes)
+    int lenToCopy = recordLen < maxlen ? recordLen : maxlen;
+    memcpy(record, pageBuf + recordOff, lenToCopy);
+
+    // 4. Unfix the page
+    err = PF_UnfixPage(tbl->fd, pageNum, FALSE);
+    checkerr(err);
+
+    return recordLen; // return size of record
 }
 
 void
 Table_Scan(Table *tbl, void *callbackObj, ReadFunc callbackfn) {
+    int pageNum = -1;
+    char *pageBuf;
+    int err;
 
-    UNIMPLEMENTED;
+    // 1. Get first page
+    err = PF_GetFirstPage(tbl->fd, &pageNum, &pageBuf);
 
-    // For each page obtained using PF_GetFirstPage and PF_GetNextPage
-    //    for each record in that page,
-    //          callbackfn(callbackObj, rid, record, recordLen)
+    // 2. Loop through all pages
+    while (err == 0) {
+        // Get number of slots on this page
+        int nslots = getNumSlots(pageBuf);
+
+        // 3. Loop through all slots on this page
+        for (int slot = 0; slot < nslots; slot++) {
+            // Get slot offset and length
+            int slotAddr = getNthSlotOffset(slot, pageBuf);
+            int recordOff, recordLen;
+            memcpy(&recordOff, pageBuf + slotAddr, 2);
+            memcpy(&recordLen, pageBuf + slotAddr + 2, 2);
+
+            // Construct RecId (Upper 16 bits = pageNum, Lower 16 bits = slotIndex)
+            RecId rid = (pageNum << 16) | slot;
+
+            // Call the callback function with the record
+            callbackfn(callbackObj, rid, pageBuf + recordOff, recordLen);
+        }
+
+        // 4. Get next page
+        err = PF_GetNextPage(tbl->fd, &pageNum, &pageBuf);
+    }
+
+    // Note: PF_GetFirstPage/PF_GetNextPage returns PFE_EOF when no more pages,
+    // which is the expected end condition
 }
+
 
 

@@ -193,3 +193,15 @@ int PF_UnfixPage(int fd,	/* file descriptor */
                  int pagenum,	/* page number */
                  int dirty	/* true if file is dirty */
                 );
+
+/****************************************************************************
+PF_GetNumPages:
+	Get the total number of pages in the file "fd".
+
+RETURN VALUE:
+	The number of pages if fd is valid (>=0)
+	PF error code if fd is invalid (<0)
+
+*****************************************************************************/
+int PF_GetNumPages(int fd /* file descriptor */);
+
