@@ -102,8 +102,8 @@ int
 xAM_OpenIndexScan(
     int fd,
     char attrtype,
-    int  op,
     int attrlen,
+    int  op,
     char *val
 )
 {

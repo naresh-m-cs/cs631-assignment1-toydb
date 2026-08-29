@@ -1,11 +1,13 @@
 /* test3.c: tests deletion and scan. */
 #include <stdio.h>
+#include <stdlib.h>
 #include "am.h"
 #include "testam.h"
 
 #define MAXRECS	512	/* max # of records to insert */
 #define FNAME_LENGTH 80	/* file name size */
 
+int
 main()
 {
     int fd;	/* file descriptor for the index */
@@ -149,4 +151,5 @@ main()
     xAM_DestroyIndex(RELNAME,0);
 
     printf("test3 done!\n");
+    return 0;
 }

@@ -1,13 +1,18 @@
 /* test2.c: test insert and scan. But this time, forcing
 splitting of pages of your B+ tree */
 #include <stdio.h>
+#include <stdlib.h>
 #include "am.h"
 #include "testam.h"
+
+/* Function declaration from misc.c */
+extern void padstring(char *str, int length);
 
 #define STRING_SIZE 250	/* string */
 #define MAXRECS	100	/* max # of records to insert */
 #define FNAME_LENGTH 80	/* file name size */
 
+int
 main()
 {
     int fd;	/* file descriptor for the index */
@@ -55,4 +60,5 @@ main()
     xAM_DestroyIndex(RELNAME,0);
 
     printf("test2 done!\n");
+    return 0;
 }

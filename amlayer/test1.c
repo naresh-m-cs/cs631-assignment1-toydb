@@ -2,6 +2,7 @@
 test1.c: tests simple index insertion and scans.
 ************************************************************************/
 #include <stdio.h>
+#include <stdlib.h>
 #include "am.h"
 #include "testam.h"
 
@@ -82,4 +83,5 @@ main()
     xAM_DestroyIndex(RELNAME,RECVAL_INDEXNO);
 
     printf("test1 done!\n");
+    return 0;
 }
